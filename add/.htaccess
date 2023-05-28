@@ -1,5 +1,7 @@
 RewriteEngine On
 
+Options -Indexes
+
 # Исключение для POST-запросов
 RewriteCond %{REQUEST_METHOD} !POST
 
