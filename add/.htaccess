@@ -1,0 +1,17 @@
+RewriteEngine On
+
+# Исключение для POST-запросов
+RewriteCond %{REQUEST_METHOD} !POST
+
+# Правила перезаписи URL для удаления расширений файлов
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^.*$ $0.php [L,QSA]
+
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^.*$ $0.html [L,QSA]
+
+# Правила для обработки ошибки 404
+ErrorDocument 404 /404.html
+
