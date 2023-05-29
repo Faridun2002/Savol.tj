@@ -7,11 +7,18 @@ if ($_SESSION['logged'] != "ok") {
 }
 unset($_SESSION["logged"]);
 
+function validate($data){
+  $data = trim($data);
+  $data = stripslashes($data);
+  $data = htmlspecialchars($data);
+  return $data;
+}
+
 $sesUserName = $_SESSION['UserName'];
 $sesUserId = $_SESSION['UserId'];
 
 // Чтение значений из поля POST
-$mainText = $_POST['mainText'];
+$mainText = validate($_POST['mainText']);
 $category = $_POST['category'];
 
 if($_POST['hide'] == "on"){
@@ -30,6 +37,7 @@ $dbname = $config['dbname'];
 
 // Проверяем, были ли выбраны файлы
 if(isset($_FILES['files'])) {
+  $AllUploadRenamePath = '';
   $currentDateTime = '';
   $files = $_FILES['files'];
   // Перебираем массив файлов
@@ -49,31 +57,27 @@ if(isset($_FILES['files'])) {
     $newFilename = uniqid() . '.' . $fileExtension;
     $uploadRenamePath = '../uploads/' . $newFilename;
     rename($uploadPath, $uploadRenamePath);
+    $AllUploadRenamePath .= $newFilename . ';';
     
-    // Устанавливаем соединение с базой данных
-    $conn = new mysqli($servername, $username, $password, $dbname);
-
-    // Проверяем соединение на ошибки
-    if ($conn->connect_error) {
-      die("Connection failed: " . $conn->connect_error);
-    }
-    
-    
-    if($i == 0){
-      $currentDateTime = date("Y-m-d H:i:s");
-      $sql = "INSERT INTO questions (MainText, Category, DateCreate,  Status, UserId, HideUser, PhotoPath) VALUES ('$mainText', '$category', '$currentDateTime',  1, '$sesUserId', $hide, '$uploadRenamePath;');";
-    } else {
-      $sql = "UPDATE questions SET PhotoPath = CONCAT(PhotoPath, '" . $uploadRenamePath . ";') WHERE DateCreate = '" . $currentDateTime . "'";
-    }
-
-    // Выполняем SQL-запрос
-    if ($conn->query($sql) === false) {
-      echo "Error: " . $sql . "<br>" . $conn->error;
-    }
-
-    // Закрываем соединение с базой данных
-    $conn->close();
   }
+  // Устанавливаем соединение с базой данных
+  $conn = new mysqli($servername, $username, $password, $dbname);
+
+  // Проверяем соединение на ошибки
+  if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+  }
+  
+  $currentDateTime = date("Y-m-d H:i:s");
+  $sql = "INSERT INTO questions (MainText, Category, DateCreate,  Status, UserId, HideUser, PhotoPath) VALUES ('$mainText', '$category', '$currentDateTime',  1, '$sesUserId', $hide, '$AllUploadRenamePath;');";
+  
+  // Выполняем SQL-запрос
+  if ($conn->query($sql) === false) {
+    echo "Error: " . $sql . "<br>" . $conn->error;
+  }
+
+  // Закрываем соединение с базой данных
+  $conn->close();
 } else {
   // Устанавливаем соединение с базой данных
   $conn = new mysqli($servername, $username, $password, $dbname);
@@ -94,7 +98,7 @@ if(isset($_FILES['files'])) {
   $conn->close();
 }
 $result = [
-  'message' => 'Данные успешно обработаны',
+  'message' => 'Вопрос отправлен на обработку',
   'mainText' => $mainText,
   'status' => '1',
   'userId' => $sesUserId
